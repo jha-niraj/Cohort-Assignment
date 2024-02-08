@@ -8,37 +8,67 @@ const { jwt_secret } = require("../config");
 // User Routes
 router.post('/signup', async (req, res) => {
     // Implement user signup logic
-    const username = req.headers.username;
-    const password = req.headers.password;
+    const { username, password } = req.body;
 
-    await User.create({
-        username,
-        password
-    })
-    res.json({
-        msg: "User created successfully"
-    })
+    try {
+        const parsedValue = userSchema.safeParse({
+            username,
+            password
+        })
+        if(parsedValue.success) {
+            await User.create({
+                username,
+                password
+            })
+            res.json({
+                msg: "User created successfully"
+            })
+        } else {
+            res.json({
+                msg: "Wrong inputs!!!"
+            })
+        }
+    } catch(error) {
+        res.json({
+            msg: error
+        })
+    }
 });
 
 router.post('/signin', async (req, res) => {
     // Implement admin signup logic
-    const username = req.headers.username;
-    const password = req.headers.password;
+    const { username, password } = req.body;
 
-    const user = await User.find({
-        username, 
-        password
-    })
-    if(user) {
-        const token = jwt.sign({
-            username
-        }, jwt_secret);
-        res.json({
-            token
+    try {
+        const parsedValue = userSchema.safeParse({
+            username,
+            password
         })
-    } else {
+        if(parsedValue.success) {
+            const user = await User.findOne({
+                username,
+                password
+            })
+            if(user) {
+                const token = jwt.sign({
+                    username
+                }, jwt_secret);
+                res.json({
+                    token: token
+                })
+            } else {
+                res.json({
+                    msg: "User doesn't exist!!!"
+                })
+            }
+        } else {
+            res.json({
+                msg: "Wrong inputs!!!"
+            })
+        }
+    } catch(error) {
         res.json({
-            msg: "User is not authenticated!!!"
+            msg: "Error Occured!"
         })
     }
 });

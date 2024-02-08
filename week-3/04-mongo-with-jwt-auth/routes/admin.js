@@ -9,37 +9,68 @@ const { Admin, Course } = require("../db");
 // Admin Routes
 router.post('/signup', async (req, res) => {
     // Implement admin signup logic
-    const username = req.headers.username;
-    const password = req.headers.password;
-    
-    await Admin.create({
-        username,
-        password
-    })
-    res.json({
-        msg: "Admin created successfully"
-    })
+    const { username, password } = req.body;
+
+    try {
+        const parsedValue = adminSchema.safeParse({
+            username,
+            password
+        })
+        if(parsedValue.success) {
+            await Admin.create({
+                username,
+                password
+            })
+            res.json({
+                msg: "Admin created successfully"
+            })
+        } else {
+            res.json({
+                msg: "Wrong inputs!!!"
+            })
+        }
+    } catch(error) {
+        console.log(error);
+        res.json({
+            msg: "Error Occured!!!"
+        })
+    }
 });
 
 router.post('/signin', async (req, res) => {
     // Implement admin signup logic
-    const username = req.headers.username;
-    const password = req.headers.password;
+    const { username, password } = req.body;
 
-    const user = await Admin.find({
-        username,
-        password
-    })
-    if(user) {
-        const token = jwt.sign({
-            username
-        }, jwt_secret);
-        res.json({
-            token
+    try {
+        const parsedValue = adminSchema.safeParse({
+            username,
+            password
         })
-    } else {
+        if(parsedValue.success) {
+            const user = await Admin.findOne({
+                username,
+                password
+            })
+            if(user) {
+                const token = jwt.sign({
+                    username
+                }, jwt_secret);
+                res.json({
+                    token: token
+                })
+            } else {
+                res.json({
+                    msg: "Admin doesn't exist!!!"
+                })
+            }
+        } else {
+            res.json({
+                msg: "Wrong inputs!!!"
+            })
+        }
+    } catch(error) {
         res.json({
-            msg: "Admin is not authenticated!!!"
+            msg: "Error Occured!"
         })
     }
 });
